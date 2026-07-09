@@ -1,0 +1,6 @@
+id: magicmetrics
+name: MagicMetrics
+main: dev.opencollab.magicmetrics.GeyserMagicMetrics
+api: 2.9.0
+version: 1.0.0
+authors: [opencollaboration]
