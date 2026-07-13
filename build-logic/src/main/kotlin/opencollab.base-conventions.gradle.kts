@@ -33,6 +33,9 @@ repositories {
     // Floodgate, Cumulus etc.
     maven("https://repo.opencollab.dev/main")
 
+    // WDPE
+    maven("https://repo.waterdog.dev/main")
+
     // Jitpack for e.g. MCPL
     maven("https://jitpack.io") {
         content { includeGroupByRegex("com\\.github\\..*") }

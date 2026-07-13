@@ -7,3 +7,7 @@ dependencies {
     compileOnly(libs.geyser.api)
     compileOnly(libs.geyser.core)
 }
+
+tasks.shadowJar {
+    relocate("org.spongepowered.configurate", "dev.opencollab.magicmetrics.shaded.configurate")
+}

@@ -1,10 +1,15 @@
-package dev.opencollab.magicmetrics;
+package dev.opencollab.magicmetrics.server;
 
+import com.sun.net.httpserver.HttpExchange;
+import dev.opencollab.magicmetrics.MagicMetrics;
 import dev.opencollab.magicmetrics.config.Config;
+import dev.opencollab.magicmetrics.https.SimpleHttpResponder;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusRenameFilter;
 import org.cloudburstmc.netty.channel.raknet.RakConstants;
 import org.cloudburstmc.netty.channel.raknet.config.RakServerMetrics;
 
@@ -12,28 +17,35 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-public class ServerMetrics implements RakServerMetrics {
-
+public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
+    private final MagicMetrics metrics;
+    private final PrometheusMeterRegistry registry;
     private final AtomicInteger ACTIVE_CHANNELS = new AtomicInteger();
     private final AtomicInteger BLOCKED_ADDRESSES = new AtomicInteger();
+    private final AtomicInteger CONNECTED_PLAYERS = new AtomicInteger();
 
     private final Gauge activeChannels;
     private final Gauge blockedAddresses;
+    private final Gauge connectedPlayers;
     private final Counter pings;
     private final Counter conReq1;
     private final Counter conReq2;
     private final Counter conReqs;
     private final Counter newIncoming;
 
-    public ServerMetrics(Config config, MeterRegistry registry) {
-        this.activeChannels = buildGauge(config.networkMetrics().activeChannels(), registry, ACTIVE_CHANNELS::get);
-        this.blockedAddresses = buildGauge(config.networkMetrics().blockedAddresses(), registry, BLOCKED_ADDRESSES::get);
+    public ServerMetrics(MagicMetrics metrics, PrometheusMeterRegistry registry) {
+        this.metrics = metrics;
+        this.registry = registry;
+        this.registry.config().meterFilter(new PrometheusRenameFilter());
+        this.activeChannels = buildGauge(metrics.config().networkMetrics().activeChannels(), registry, ACTIVE_CHANNELS::get);
+        this.blockedAddresses = buildGauge(metrics.config().networkMetrics().blockedAddresses(), registry, BLOCKED_ADDRESSES::get);
+        this.connectedPlayers = buildGauge(metrics.config().networkMetrics().connectedPlayers(), registry, CONNECTED_PLAYERS::get);
 
-        this.pings = buildCounter(config.networkMetrics().pings(), registry);
-        this.conReqs = buildCounter(config.networkMetrics().connectionRequests(), registry);
-        this.conReq1 = buildCounter(config.networkMetrics().connectionRequests1(), registry);
-        this.conReq2 = buildCounter(config.networkMetrics().connectionRequests2(), registry);
-        this.newIncoming = buildCounter(config.networkMetrics().newIncomingConnections(), registry);
+        this.pings = buildCounter(metrics.config().networkMetrics().pings(), registry);
+        this.conReqs = buildCounter(metrics.config().networkMetrics().connectionRequests(), registry);
+        this.conReq1 = buildCounter(metrics.config().networkMetrics().connectionRequests1(), registry);
+        this.conReq2 = buildCounter(metrics.config().networkMetrics().connectionRequests2(), registry);
+        this.newIncoming = buildCounter(metrics.config().networkMetrics().newIncomingConnections(), registry);
     }
 
     public Gauge buildGauge(Config.MetricConfig config, MeterRegistry registry, Supplier<Number> supplier) {
@@ -113,8 +125,23 @@ public class ServerMetrics implements RakServerMetrics {
                 }
             }
             default -> {
-                System.out.println("Unknown packet id: " + packetId);
+                metrics.logWarn("Unknown packet id: " + packetId);
             }
         }
+    }
+
+    public void playerJoined() {
+        CONNECTED_PLAYERS.incrementAndGet();
+    }
+
+    public void playerLeft() {
+        CONNECTED_PLAYERS.decrementAndGet();
+    }
+
+    @Override
+    public HttpResponse getResponse(HttpExchange exchange) {
+        String contentType = "application/openmetrics-text";
+        exchange.getResponseHeaders().add("Content-Type", contentType);
+        return new HttpResponse(200, registry.scrape(contentType));
     }
 }

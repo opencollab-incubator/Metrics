@@ -4,6 +4,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven("https://repo.opencollab.dev/main/")
+        maven("https://repo.waterdog.dev/main")
     }
 
     includeBuild("build-logic")

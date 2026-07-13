@@ -12,6 +12,7 @@ repositories {
     gradlePluginPortal()
 
     maven("https://repo.opencollab.dev/maven-snapshots/")
+    maven("https://repo.waterdog.dev/main")
 }
 
 dependencies {

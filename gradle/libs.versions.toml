@@ -3,6 +3,7 @@ configurate = "4.2.0-GeyserMC-20251111.004649-11"
 configurate-core = "4.2.0-GeyserMC-20251111.004649-12"
 raknet = "1.1.0.CR1-SNAPSHOT"
 micrometer = "1.16.1"
+prometheus = "1.8.0"
 yaml = "2.2"
 
 # plugins
@@ -12,6 +13,7 @@ shadow = "9.4.1"
 
 # bootstrap
 geyser = "2.10.0-SNAPSHOT"
+wdpe = "2.0.4-SNAPSHOT"
 
 [libraries]
 yaml = { module = "org.yaml:snakeyaml", version.ref = "yaml" }
@@ -23,11 +25,16 @@ configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref 
 
 micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer" }
 micrometer-core = { module = "io.micrometer:micrometer-core" }
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+micrometer-prometheus-client = { module = "io.micrometer:micrometer-registry-prometheus-simpleclient" }
+micrometer-prometheus-http = { module = "io.prometheus:prometheus-metrics-exporter-httpserver", version.ref = "prometheus" }
 
 # bootstraps
 
 geyser-api = { module = "org.geysermc.geyser:api", version.ref = "geyser" }
 geyser-core = { module = "org.geysermc.geyser:core", version.ref = "geyser" }
+
+wdpe = { module = "dev.waterdog.waterdogpe:waterdog", version.ref = "wdpe" }
 
 raknet = { group = "org.cloudburstmc.netty", name = "netty-transport-raknet", version.ref = "raknet" }
 

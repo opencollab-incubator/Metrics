@@ -15,7 +15,7 @@ tasks {
     }
 
     val shadowJar = named<ShadowJar>("shadowJar") {
-        archiveBaseName.set(project.name)
+        archiveBaseName.set("MagicMetrics-" + project.name)
         archiveVersion.set("")
         archiveClassifier.set("")
         

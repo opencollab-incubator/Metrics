@@ -11,4 +11,7 @@ dependencies {
 
     api(platform(libs.micrometer.bom))
     api(libs.micrometer.core)
+    api(libs.micrometer.prometheus)
+    api(libs.micrometer.prometheus.client)
+    api(libs.micrometer.prometheus.http)
 }

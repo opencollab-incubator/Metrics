@@ -20,6 +20,12 @@ public class Config {
     @Comment("The port to bind the HTTP server to")
     int port = 8080;
 
+    @Comment("The path of the keystore for HTTPS")
+    String keystorePath = "";
+
+    @Comment("The password to the keystore for HTTPS")
+    String keystorePassword = "";
+
     @Comment("Health check config")
     HealthCheck healthCheck;
 
@@ -38,7 +44,7 @@ public class Config {
         boolean enabled = true;
 
         @Comment("The endpoint of the server metrics endpoint")
-        String endpoint;
+        String endpoint = "/metrics";
 
         MetricConfig activeChannels = new MetricConfig(
                 true, "active_channels", "The number of active channels"
@@ -67,6 +73,10 @@ public class Config {
         MetricConfig newIncomingConnections = new MetricConfig(
                 true, "new_incoming_connections", "The number of unconnected packets", Map.of("id", "NEW_INCOMING_CONNECTION")
         );
+
+        MetricConfig connectedPlayers = new MetricConfig(
+                true, "connected_players", "The number of connected players", Map.of("id", "CONNECTED_PLAYERS")
+        );
     }
 
     @Getter
@@ -78,7 +88,13 @@ public class Config {
         boolean enabled = true;
 
         @Comment("The endpoint of the health check")
-        String endpoint = "/health/";
+        String endpoint = "/health";
+
+        @Comment("The address to check every minute")
+        String address = "127.0.0.1";
+
+        @Comment("The port to check every minute")
+        int port = 19132;
     }
 
     @Getter
@@ -86,6 +102,7 @@ public class Config {
     @AllArgsConstructor
     @ConfigSerializable
     public static class MetricConfig {
+        public MetricConfig() {} // Config access
 
         @Comment("Whether to enable this metric.")
         boolean enabled;

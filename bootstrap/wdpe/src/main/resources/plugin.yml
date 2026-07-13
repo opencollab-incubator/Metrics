@@ -1,0 +1,4 @@
+name: MagicMetrics
+version: 1.0.0
+author: Open Collaboration
+main: dev.opencollab.magicmetrics.WDPEPlugin
