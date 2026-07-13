@@ -77,6 +77,13 @@ public class Config {
         MetricConfig connectedPlayers = new MetricConfig(
                 true, "connected_players", "The number of connected players", Map.of("id", "CONNECTED_PLAYERS")
         );
+
+        boolean classLoaderMetrics = true;
+        boolean jvmMemoryMetrics = true;
+        boolean jvmGcMetrics = true;
+        boolean processorMetrics = true;
+        boolean jvmThreadMetrics = true;
+        boolean jvmThreadDeadlockMetrics = true;
     }
 
     @Getter
@@ -107,7 +114,7 @@ public class Config {
         @Comment("The description")
         String description;
 
-        @Comment("The tags, TODO link docs")
+        @Comment("The tags, see the micrometer docs https://docs.micrometer.io/micrometer/reference/concepts/naming.html")
         Map<String, String> tags;
 
         public MetricConfig(boolean enabled, String name, String description) {

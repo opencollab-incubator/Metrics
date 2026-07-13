@@ -20,7 +20,7 @@ public class ConfigLoader {
                 .indent(2)
                 .nodeStyle(NodeStyle.BLOCK)
                 .file(file)
-                .defaultOptions(options -> options.header("TODO"))
+                .defaultOptions(options -> options.header("MagicMetrics config file"))
                 .build();
 
         var node = loader.load();
