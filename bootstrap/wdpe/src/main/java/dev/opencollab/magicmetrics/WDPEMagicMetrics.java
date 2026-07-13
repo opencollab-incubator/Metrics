@@ -1,7 +1,5 @@
 package dev.opencollab.magicmetrics;
 
-import dev.opencollab.magicmetrics.health.HealthResult;
-
 public class WDPEMagicMetrics extends MagicMetrics {
     private final WDPEPlugin plugin;
 
@@ -10,27 +8,22 @@ public class WDPEMagicMetrics extends MagicMetrics {
     }
 
     @Override
-    public HealthResult getCurrentHealthResult() {
-        return null;
-    }
-
-    @Override
     public void logInfo(String message) {
-
+        plugin.getLogger().info(message);
     }
 
     @Override
     public void logWarn(String message) {
-
+        plugin.getLogger().warn(message);
     }
 
     @Override
     public void logError(String message) {
-
+        plugin.getLogger().error(message);
     }
 
     @Override
     public void logError(String message, Throwable throwable) {
-
+        plugin.getLogger().error(message, throwable);
     }
 }

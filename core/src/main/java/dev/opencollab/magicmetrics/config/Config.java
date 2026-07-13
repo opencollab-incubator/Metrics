@@ -89,12 +89,6 @@ public class Config {
 
         @Comment("The endpoint of the health check")
         String endpoint = "/health";
-
-        @Comment("The address to check every minute")
-        String address = "127.0.0.1";
-
-        @Comment("The port to check every minute")
-        int port = 19132;
     }
 
     @Getter

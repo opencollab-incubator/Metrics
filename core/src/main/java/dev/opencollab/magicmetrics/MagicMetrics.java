@@ -2,18 +2,24 @@ package dev.opencollab.magicmetrics;
 
 import dev.opencollab.magicmetrics.config.Config;
 import dev.opencollab.magicmetrics.health.HealthMetrics;
-import dev.opencollab.magicmetrics.health.HealthResult;
+import dev.opencollab.magicmetrics.health.checks.DeadlockHealthCheck;
+import dev.opencollab.magicmetrics.health.checks.NettyMeasure;
 import dev.opencollab.magicmetrics.https.MetricServer;
 import dev.opencollab.magicmetrics.server.ServerMetrics;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.netty.bootstrap.ServerBootstrap;
+import io.smallrye.health.SmallRyeHealthReporter;
+import io.smallrye.health.api.HealthType;
+import io.smallrye.health.registry.HealthRegistries;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
 
 public abstract class MagicMetrics {
     private final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    @Getter
+    private final SmallRyeHealthReporter reporter = new SmallRyeHealthReporter();
 
     @Getter
     @Accessors(fluent = true)
@@ -31,6 +37,8 @@ public abstract class MagicMetrics {
     }
 
     public void initHealth() {
+        HealthRegistries.getRegistry(HealthType.LIVENESS).register("netty-threads", NettyMeasure.INSTANCE);
+        HealthRegistries.getRegistry(HealthType.LIVENESS).register("deadlocked-threads", new DeadlockHealthCheck());
         this.server.registerHandler(config.healthCheck().endpoint(), new HealthMetrics(this));
     }
 
@@ -47,8 +55,6 @@ public abstract class MagicMetrics {
         if (this.serverMetrics == null) return;
         this.serverMetrics.playerLeft();
     }
-
-    public abstract HealthResult getCurrentHealthResult();
 
     public abstract void logInfo(String message);
 

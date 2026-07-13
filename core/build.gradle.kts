@@ -14,4 +14,5 @@ dependencies {
     api(libs.micrometer.prometheus)
     api(libs.micrometer.prometheus.client)
     api(libs.micrometer.prometheus.http)
+    api(libs.smallrye.health)
 }

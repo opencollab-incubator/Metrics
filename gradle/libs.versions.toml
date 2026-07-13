@@ -4,6 +4,7 @@ configurate-core = "4.2.0-GeyserMC-20251111.004649-12"
 raknet = "1.1.0.CR1-SNAPSHOT"
 micrometer = "1.16.1"
 prometheus = "1.8.0"
+smallrye-health = "4.1.0"
 yaml = "2.2"
 
 # plugins
@@ -28,6 +29,8 @@ micrometer-core = { module = "io.micrometer:micrometer-core" }
 micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
 micrometer-prometheus-client = { module = "io.micrometer:micrometer-registry-prometheus-simpleclient" }
 micrometer-prometheus-http = { module = "io.prometheus:prometheus-metrics-exporter-httpserver", version.ref = "prometheus" }
+
+smallrye-health = { group = "io.smallrye", name = "smallrye-health", version.ref = "smallrye-health" }
 
 # bootstraps
 
