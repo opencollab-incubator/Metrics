@@ -4,12 +4,8 @@ import com.sun.net.httpserver.HttpExchange;
 import dev.opencollab.magicmetrics.MagicMetrics;
 import dev.opencollab.magicmetrics.config.Config;
 import dev.opencollab.magicmetrics.https.SimpleHttpResponder;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.micrometer.prometheusmetrics.PrometheusRenameFilter;
 import org.cloudburstmc.netty.channel.raknet.RakConstants;
 import org.cloudburstmc.netty.channel.raknet.config.RakServerMetrics;
 
@@ -19,7 +15,7 @@ import java.util.function.Supplier;
 
 public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
     private final MagicMetrics metrics;
-    private final PrometheusMeterRegistry registry;
+    private final PrometheusMeterRegistry prometheusRegistry;
     private final AtomicInteger ACTIVE_CHANNELS = new AtomicInteger();
     private final AtomicInteger BLOCKED_ADDRESSES = new AtomicInteger();
     private final AtomicInteger CONNECTED_PLAYERS = new AtomicInteger();
@@ -33,22 +29,21 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
     private final Counter conReqs;
     private final Counter newIncoming;
 
-    public ServerMetrics(MagicMetrics metrics, PrometheusMeterRegistry registry) {
+    public ServerMetrics(MagicMetrics metrics, PrometheusMeterRegistry prometheusRegistry) {
         this.metrics = metrics;
-        this.registry = registry;
-        this.registry.config().meterFilter(new PrometheusRenameFilter());
-        this.activeChannels = buildGauge(metrics.config().networkMetrics().activeChannels(), registry, ACTIVE_CHANNELS::get);
-        this.blockedAddresses = buildGauge(metrics.config().networkMetrics().blockedAddresses(), registry, BLOCKED_ADDRESSES::get);
-        this.connectedPlayers = buildGauge(metrics.config().networkMetrics().connectedPlayers(), registry, CONNECTED_PLAYERS::get);
+        this.prometheusRegistry = prometheusRegistry;
+        this.activeChannels = buildGauge(metrics.config().networkMetrics().activeChannels(), ACTIVE_CHANNELS::get);
+        this.blockedAddresses = buildGauge(metrics.config().networkMetrics().blockedAddresses(), BLOCKED_ADDRESSES::get);
+        this.connectedPlayers = buildGauge(metrics.config().networkMetrics().connectedPlayers(), CONNECTED_PLAYERS::get);
 
-        this.pings = buildCounter(metrics.config().networkMetrics().pings(), registry);
-        this.conReqs = buildCounter(metrics.config().networkMetrics().connectionRequests(), registry);
-        this.conReq1 = buildCounter(metrics.config().networkMetrics().connectionRequests1(), registry);
-        this.conReq2 = buildCounter(metrics.config().networkMetrics().connectionRequests2(), registry);
-        this.newIncoming = buildCounter(metrics.config().networkMetrics().newIncomingConnections(), registry);
+        this.pings = buildCounter(metrics.config().networkMetrics().pings());
+        this.conReqs = buildCounter(metrics.config().networkMetrics().connectionRequests());
+        this.conReq1 = buildCounter(metrics.config().networkMetrics().connectionRequests1());
+        this.conReq2 = buildCounter(metrics.config().networkMetrics().connectionRequests2());
+        this.newIncoming = buildCounter(metrics.config().networkMetrics().newIncomingConnections());
     }
 
-    public Gauge buildGauge(Config.MetricConfig config, MeterRegistry registry, Supplier<Number> supplier) {
+    public Gauge buildGauge(Config.MetricConfig config, Supplier<Number> supplier) {
         if (config.enabled()) {
             return Gauge.builder(config.name(), supplier)
                     .description(config.description())
@@ -56,12 +51,12 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
                             .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
                             .toList()
                     )
-                    .register(registry);
+                    .register(Metrics.globalRegistry);
         }
         return null;
     }
 
-    public Counter buildCounter(Config.MetricConfig config, MeterRegistry registry) {
+    public Counter buildCounter(Config.MetricConfig config) {
         if (config.enabled()) {
             return Counter.builder(config.name())
                     .description(config.description())
@@ -69,7 +64,7 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
                             .map(entry -> Tag.of(entry.getKey(), entry.getValue()))
                             .toList()
                     )
-                    .register(registry);
+                    .register(Metrics.globalRegistry);
         }
         return null;
     }
@@ -142,6 +137,6 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
     public HttpResponse getResponse(HttpExchange exchange) {
         String contentType = "application/openmetrics-text";
         exchange.getResponseHeaders().add("Content-Type", contentType);
-        return new HttpResponse(200, registry.scrape(contentType));
+        return new HttpResponse(200, prometheusRegistry.scrape(contentType));
     }
 }

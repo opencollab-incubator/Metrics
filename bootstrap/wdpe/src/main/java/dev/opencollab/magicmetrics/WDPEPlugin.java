@@ -1,7 +1,7 @@
 package dev.opencollab.magicmetrics;
 
 import dev.opencollab.magicmetrics.config.ConfigLoader;
-import dev.opencollab.magicmetrics.health.checks.NettyMeasure;
+import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.event.defaults.ProxyStartEvent;
 import dev.waterdog.waterdogpe.network.NetworkInterface;
@@ -62,7 +62,7 @@ public class WDPEPlugin extends Plugin {
                         }
                         int i = 0;
                         for (EventLoopGroup group : groups) {
-                            NettyMeasure.addGroup(group, "wdpe-%d".formatted(i++));
+                            NettyHealthCheck.addGroup(group, "wdpe-%d".formatted(i++));
                         }
                     }
                 } catch (NoSuchFieldException | IllegalAccessException e) {

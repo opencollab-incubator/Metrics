@@ -4,6 +4,7 @@ public class WDPEMagicMetrics extends MagicMetrics {
     private final WDPEPlugin plugin;
 
     public WDPEMagicMetrics(WDPEPlugin plugin) {
+        super();
         this.plugin = plugin;
     }
 

@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 
-public class NettyMeasure implements HealthCheck {
-    public static final NettyMeasure INSTANCE = new NettyMeasure();
+public class NettyHealthCheck implements HealthCheck {
+    public static final NettyHealthCheck INSTANCE = new NettyHealthCheck();
 
     private final WeakHashMap<EventLoopGroup, GroupData> groups = new WeakHashMap<>();
 

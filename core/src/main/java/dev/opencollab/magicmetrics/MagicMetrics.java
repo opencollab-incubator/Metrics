@@ -3,9 +3,10 @@ package dev.opencollab.magicmetrics;
 import dev.opencollab.magicmetrics.config.Config;
 import dev.opencollab.magicmetrics.health.HealthMetrics;
 import dev.opencollab.magicmetrics.health.checks.DeadlockHealthCheck;
-import dev.opencollab.magicmetrics.health.checks.NettyMeasure;
+import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import dev.opencollab.magicmetrics.https.MetricServer;
 import dev.opencollab.magicmetrics.server.ServerMetrics;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.netty.bootstrap.ServerBootstrap;
@@ -28,6 +29,10 @@ public abstract class MagicMetrics {
     private MetricServer server;
     private ServerMetrics serverMetrics;
 
+    public MagicMetrics() {
+        Metrics.globalRegistry.add(registry);
+    }
+
     public void configureMetrics(ServerBootstrap... serverBootstraps) {
         serverMetrics = new ServerMetrics(this, registry);
         for (ServerBootstrap serverBootstrap : serverBootstraps) {
@@ -37,7 +42,7 @@ public abstract class MagicMetrics {
     }
 
     public void initHealth() {
-        HealthRegistries.getRegistry(HealthType.LIVENESS).register("netty-threads", NettyMeasure.INSTANCE);
+        HealthRegistries.getRegistry(HealthType.LIVENESS).register("netty-threads", NettyHealthCheck.INSTANCE);
         HealthRegistries.getRegistry(HealthType.LIVENESS).register("deadlocked-threads", new DeadlockHealthCheck());
         this.server.registerHandler(config.healthCheck().endpoint(), new HealthMetrics(this));
     }

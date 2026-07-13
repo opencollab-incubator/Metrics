@@ -1,7 +1,7 @@
 package dev.opencollab.magicmetrics;
 
 import dev.opencollab.magicmetrics.config.ConfigLoader;
-import dev.opencollab.magicmetrics.health.checks.NettyMeasure;
+import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import io.netty.bootstrap.ServerBootstrap;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.GeyserImpl;
@@ -53,7 +53,7 @@ public class GeyserMagicMetrics extends MagicMetrics implements Extension {
             bootstrap.setAccessible(true);
             ServerBootstrap serverBootstrap = (ServerBootstrap) bootstrap.get(server);
             configureMetrics(serverBootstrap);
-            NettyMeasure.addGroup(serverBootstrap.config().group(), "geyser");
+            NettyHealthCheck.addGroup(serverBootstrap.config().group(), "geyser");
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
