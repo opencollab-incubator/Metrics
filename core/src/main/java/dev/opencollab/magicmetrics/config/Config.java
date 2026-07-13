@@ -78,12 +78,24 @@ public class Config {
                 true, "connected_players", "The number of connected players", Map.of("id", "CONNECTED_PLAYERS")
         );
 
-        boolean classLoaderMetrics = true;
-        boolean jvmMemoryMetrics = true;
-        boolean jvmGcMetrics = true;
-        boolean processorMetrics = true;
-        boolean jvmThreadMetrics = true;
-        boolean jvmThreadDeadlockMetrics = true;
+        JvmMetricConfig classLoaderMetrics = new JvmMetricConfig(
+                true, Map.of("id", "CLASS_LOADER_METRICS")
+        );
+        JvmMetricConfig jvmMemoryMetrics = new JvmMetricConfig(
+                true, Map.of("id", "JVM_MEMORY_METRICS")
+        );
+        JvmMetricConfig jvmGcMetrics = new JvmMetricConfig(
+                true, Map.of("id", "JVM_GC_METRICS")
+        );
+        JvmMetricConfig processorMetrics = new JvmMetricConfig(
+                true, Map.of("id", "PROCESSOR_METRICS")
+        );
+        JvmMetricConfig jvmThreadMetrics = new JvmMetricConfig(
+                true, Map.of("id", "JVM_THREAD_METRICS")
+        );
+        JvmMetricConfig jvmThreadDeadlockMetrics = new JvmMetricConfig(
+                true, Map.of("id", "JVM_THREAD_DEADLOCK_METRICS")
+        );
     }
 
     @Getter
@@ -125,4 +137,22 @@ public class Config {
         }
     }
 
+    @Getter
+    @Accessors(fluent = true)
+    @AllArgsConstructor
+    @ConfigSerializable
+    public static class JvmMetricConfig {
+        public JvmMetricConfig() {} // Config access
+
+        @Comment("Whether to enable this metric.")
+        boolean enabled;
+
+        @Comment("The tags, see the micrometer docs https://docs.micrometer.io/micrometer/reference/concepts/naming.html")
+        Map<String, String> tags;
+
+        public JvmMetricConfig(boolean enabled) {
+            this.enabled = enabled;
+            this.tags = new HashMap<>();
+        }
+    }
 }
