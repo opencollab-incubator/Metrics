@@ -9,7 +9,7 @@ import dev.opencollab.magicmetrics.server.ServerMetrics;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.smallrye.health.SmallRyeHealthReporter;
 import io.smallrye.health.api.HealthType;
 import io.smallrye.health.registry.HealthRegistries;
@@ -33,12 +33,29 @@ public abstract class MagicMetrics {
         Metrics.globalRegistry.add(registry);
     }
 
-    public void configureMetrics(ServerBootstrap... serverBootstraps) {
+    /**
+     * Creates the metric meters (network counters/gauges and JVM binders) and
+     * exposes the Prometheus scrape endpoint. This is independent of any platform
+     * network server, so it can - and should - be set up regardless of whether the
+     * platform-specific network wiring below succeeds.
+     */
+    public void configureMetrics() {
         serverMetrics = new ServerMetrics(this, registry);
-        for (ServerBootstrap serverBootstrap : serverBootstraps) {
-            serverBootstrap.option(RakChannelOption.RAK_SERVER_METRICS, serverMetrics);
-        }
         this.server.registerHandler(config.networkMetrics().endpoint(), serverMetrics);
+    }
+
+    /**
+     * Wires the RakNet server metrics into an already-bound server channel.
+     * <p>
+     * RakNet reads {@code RAK_SERVER_METRICS} from the channel config (a volatile
+     * field) on every incoming packet, so setting it here takes effect even though
+     * the channel is already bound. Setting the option on the
+     * {@link io.netty.bootstrap.ServerBootstrap} instead only ever applies at bind
+     * time, which is why doing so after the server has started had no effect.
+     */
+    public void wireServerMetrics(Channel channel) {
+        if (serverMetrics == null) return;
+        channel.config().setOption(RakChannelOption.RAK_SERVER_METRICS, serverMetrics);
     }
 
     public void initHealth() {
