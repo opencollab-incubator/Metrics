@@ -113,7 +113,11 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
         binder.bindTo(Metrics.globalRegistry);
 
         if (binder instanceof AutoCloseable autoCloseable) {
-            Runtime.getRuntime().addShutdownHook(new Thread(autoCloseable::close));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    autoCloseable.close();
+                } catch (Exception e) {}
+            }));
         }
     }
 
