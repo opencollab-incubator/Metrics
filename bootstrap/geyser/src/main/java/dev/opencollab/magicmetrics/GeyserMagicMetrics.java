@@ -2,7 +2,8 @@ package dev.opencollab.magicmetrics;
 
 import dev.opencollab.magicmetrics.config.ConfigLoader;
 import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.api.GeyserApi;
@@ -33,6 +34,14 @@ public class GeyserMagicMetrics extends MagicMetrics implements Extension {
             throw new RuntimeException(e);
         }
 
+        // Register the scrape endpoint and the network/JVM meters up-front. These do
+        // not depend on the Geyser network server, so they must not be coupled to the
+        // post-init server reflection - otherwise a reflection failure there would take
+        // the JVM metrics and the whole /metrics endpoint down with it.
+        if (this.config.networkMetrics().enabled()) {
+            configureMetrics();
+        }
+
         if (!this.config.healthCheck().enabled()) return;
 
         initHealth();
@@ -44,18 +53,29 @@ public class GeyserMagicMetrics extends MagicMetrics implements Extension {
             return;
         }
 
-        // We just started - insert metrics!
+        // The Bedrock server is now bound. RakNet reads RAK_SERVER_METRICS from the
+        // live channel config on every packet, so wire our metrics into the already
+        // bound channel(s) here. Setting it on the ServerBootstrap after bind (as this
+        // did before) never reaches the running channel, which is why the network
+        // stats stayed at zero.
         GeyserImpl impl = (GeyserImpl) GeyserApi.api();
         GeyserServer server = impl.getGeyserServer();
 
         try {
-            Field bootstrap = server.getClass().getDeclaredField("bootstrap");
-            bootstrap.setAccessible(true);
-            ServerBootstrap serverBootstrap = (ServerBootstrap) bootstrap.get(server);
-            configureMetrics(serverBootstrap);
-            NettyHealthCheck.addGroup(serverBootstrap.config().group(), "geyser");
+            Field bootstrapFutures = server.getClass().getDeclaredField("bootstrapFutures");
+            bootstrapFutures.setAccessible(true);
+            ChannelFuture[] futures = (ChannelFuture[]) bootstrapFutures.get(server);
+            for (ChannelFuture future : futures) {
+                Channel channel = future.channel();
+                if (channel == null) continue;
+                wireServerMetrics(channel);
+                NettyHealthCheck.addGroup(channel.eventLoop().parent(), "geyser");
+            }
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            // The metrics endpoint itself is already up (configured in pre-init), so a
+            // failure to reflect into Geyser's server only costs the RakNet counters -
+            // log it instead of tearing everything down.
+            logError("Failed to wire RakNet network metrics into the Geyser server", e);
         }
     }
 
