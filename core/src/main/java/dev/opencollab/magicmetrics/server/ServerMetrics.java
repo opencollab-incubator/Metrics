@@ -116,7 +116,7 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     autoCloseable.close();
-                } catch (Exception e) {}
+                } catch (Exception ignored) {}
             }));
         }
     }
@@ -170,9 +170,6 @@ public class ServerMetrics implements RakServerMetrics, SimpleHttpResponder {
                 if (newIncoming != null) {
                     this.newIncoming.increment();
                 }
-            }
-            default -> {
-                metrics.logWarn("Unknown packet id: " + packetId);
             }
         }
     }

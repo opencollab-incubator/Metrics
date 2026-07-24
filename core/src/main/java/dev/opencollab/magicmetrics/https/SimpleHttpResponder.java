@@ -5,14 +5,16 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public interface SimpleHttpResponder extends HttpHandler {
     @Override
     default void handle(HttpExchange exchange) throws IOException {
         HttpResponse response = getResponse(exchange);
-        exchange.sendResponseHeaders(response.statusCode(), response.message().length());
+        byte[] bytes = response.message().getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(response.statusCode(), bytes.length);
         OutputStream os = exchange.getResponseBody();
-        os.write(response.message().getBytes());
+        os.write(bytes);
         os.close();
     }
 

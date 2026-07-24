@@ -27,4 +27,4 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            bootstrap/geyser/build/libs/
+            bootstrap/geyser/build/libs/*.jar

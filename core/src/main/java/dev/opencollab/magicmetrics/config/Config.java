@@ -59,19 +59,19 @@ public class Config {
         );
 
         MetricConfig connectionRequests1 = new MetricConfig(
-                true, "connection_requests_one", "The number of unconnected packets", Map.of("id", "CONN_REQ_1")
+                true, "connection_requests_one", "The number of stage 1 connection requests", Map.of("id", "CONN_REQ_1")
         );
 
         MetricConfig connectionRequests2 = new MetricConfig(
-                true, "connection_requests_two", "The number of unconnected packets", Map.of("id", "CONN_REQ_2")
+                true, "connection_requests_two", "The number of stage 2 connection requests", Map.of("id", "CONN_REQ_2")
         );
 
         MetricConfig connectionRequests = new MetricConfig(
-                true, "connection_requests", "The number of unconnected packets", Map.of("id", "CONNECTION_REQUEST")
+                true, "connection_requests", "The number of connection requests", Map.of("id", "CONNECTION_REQUEST")
         );
 
         MetricConfig newIncomingConnections = new MetricConfig(
-                true, "new_incoming_connections", "The number of unconnected packets", Map.of("id", "NEW_INCOMING_CONNECTION")
+                true, "new_incoming_connections", "The number of new incoming connections", Map.of("id", "NEW_INCOMING_CONNECTION")
         );
 
         MetricConfig connectedPlayers = new MetricConfig(

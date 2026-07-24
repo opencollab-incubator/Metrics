@@ -9,6 +9,10 @@ import java.io.FileNotFoundException;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class MetricServer {
     private final HttpsServer httpsServer;
@@ -16,6 +20,7 @@ public class MetricServer {
 
     public MetricServer(MagicMetrics metrics) throws Exception {
         InetSocketAddress address = new InetSocketAddress(metrics.config().address(), metrics.config().port());
+        Executor executor = Executors.newSingleThreadExecutor();
         if (metrics.config().keystorePath().isEmpty() || metrics.config().keystorePassword().isEmpty()) {
             if (metrics.config().keystorePath().isEmpty()) {
                 metrics.logInfo("Keystore path is empty.");
@@ -26,6 +31,7 @@ public class MetricServer {
             metrics.logInfo("Using HTTP server.");
             this.httpServer = HttpServer.create(address, 0);
             this.httpsServer = null;
+            this.httpServer.setExecutor(executor);
             this.httpServer.start();
             return;
         }
@@ -75,8 +81,13 @@ public class MetricServer {
         this.httpsServer = httpsServer;
         this.httpServer = httpServer;
 
-        if (this.httpsServer != null) this.httpsServer.start();
-        else this.httpServer.start();
+        if (this.httpsServer != null) {
+            this.httpsServer.setExecutor(executor);
+            this.httpsServer.start();
+            return;
+        }
+        this.httpServer.setExecutor(executor);
+        this.httpServer.start();
     }
 
     public void registerHandler(String path, HttpHandler handler) {
