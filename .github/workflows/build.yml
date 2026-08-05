@@ -28,3 +28,7 @@ jobs:
         with:
           files: |
             bootstrap/geyser/build/libs/*.jar
+      - name: Publish to Modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: ./gradlew modrinth

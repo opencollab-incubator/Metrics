@@ -11,6 +11,7 @@ yaml = "2.2"
 indra = "4.0.0"
 lombok = "9.2.0"
 shadow = "9.4.1"
+minotaur = "2.9.0"
 
 # bootstrap
 geyser = "2.10.0-SNAPSHOT"
@@ -44,3 +45,4 @@ raknet = { group = "org.cloudburstmc.netty", name = "netty-transport-raknet", ve
 lombok = { group = "io.freefair.gradle", name = "lombok-plugin", version.ref = "lombok" }
 indra = { group = "net.kyori", name  = "indra-common", version.ref = "indra" }
 shadow = { group = "com.gradleup.shadow", name = "com.gradleup.shadow.gradle.plugin", version.ref = "shadow" }
+minotaur = { group = "com.modrinth.minotaur", name = "Minotaur", version.ref = "minotaur" }

@@ -26,4 +26,5 @@ dependencies {
     implementation(libs.lombok)
     implementation(libs.indra)
     implementation(libs.shadow)
+    implementation(libs.minotaur)
 }

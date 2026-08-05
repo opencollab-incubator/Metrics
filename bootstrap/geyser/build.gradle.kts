@@ -1,5 +1,6 @@
 plugins {
     id("opencollab.platform-conventions")
+    id("opencollab.modrinth-conventions")
 }
 
 dependencies {
@@ -10,4 +11,9 @@ dependencies {
 
 tasks.shadowJar {
     relocate("org.spongepowered.configurate", "dev.opencollab.magicmetrics.shaded.configurate")
+}
+
+modrinth {
+    uploadFile.set(tasks.getByPath("shadowJar"))
+    loaders.add("geyser")
 }
