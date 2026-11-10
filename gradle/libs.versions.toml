@@ -1,7 +1,7 @@
 [versions]
 configurate = "4.2.0-GeyserMC-20251111.004649-11"
 configurate-core = "4.2.0-GeyserMC-20251111.004649-12"
-raknet = "1.1.0.CR1-SNAPSHOT"
+cb-netty = "2.0.0.CR6-SNAPSHOT"
 micrometer = "1.16.1"
 prometheus = "1.8.0"
 smallrye-health = "4.1.0"
@@ -14,7 +14,7 @@ shadow = "9.4.1"
 minotaur = "2.9.0"
 
 # bootstrap
-geyser = "2.10.0-SNAPSHOT"
+geyser = "2.12.0-SNAPSHOT"
 wdpe = "2.0.4-SNAPSHOT"
 
 [libraries]
@@ -40,7 +40,7 @@ geyser-core = { module = "org.geysermc.geyser:core", version.ref = "geyser" }
 
 wdpe = { module = "dev.waterdog.waterdogpe:waterdog", version.ref = "wdpe" }
 
-raknet = { group = "org.cloudburstmc.netty", name = "netty-transport-raknet", version.ref = "raknet" }
+nethernet = { group = "org.cloudburstmc.netty", name = "netty-transport-nethernet", version.ref = "cb-netty" }
 
 lombok = { group = "io.freefair.gradle", name = "lombok-plugin", version.ref = "lombok" }
 indra = { group = "net.kyori", name  = "indra-common", version.ref = "indra" }

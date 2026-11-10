@@ -3,7 +3,6 @@ package dev.opencollab.magicmetrics;
 import dev.opencollab.magicmetrics.config.ConfigLoader;
 import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.api.GeyserApi;
@@ -12,10 +11,11 @@ import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPreInitializeEvent;
 import org.geysermc.geyser.api.extension.Extension;
-import org.geysermc.geyser.network.netty.GeyserServer;
+import org.geysermc.geyser.network.bedrock.nethernet.NetherNetServer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.concurrent.CompletableFuture;
 
 public class GeyserMagicMetrics extends MagicMetrics implements Extension {
     @Subscribe
@@ -53,30 +53,47 @@ public class GeyserMagicMetrics extends MagicMetrics implements Extension {
             return;
         }
 
-        // The Bedrock server is now bound. RakNet reads RAK_SERVER_METRICS from the
-        // live channel config on every packet, so wire our metrics into the already
-        // bound channel(s) here. Setting it on the ServerBootstrap after bind (as this
-        // did before) never reaches the running channel, which is why the network
-        // stats stayed at zero.
         GeyserImpl impl = (GeyserImpl) GeyserApi.api();
-        GeyserServer server = impl.getGeyserServer();
-
-        try {
-            Field bootstrapFutures = server.getClass().getDeclaredField("bootstrapFutures");
-            bootstrapFutures.setAccessible(true);
-            ChannelFuture[] futures = (ChannelFuture[]) bootstrapFutures.get(server);
-            for (ChannelFuture future : futures) {
-                Channel channel = future.channel();
-                if (channel == null) continue;
-                wireServerMetrics(channel);
-                NettyHealthCheck.addGroup(channel.eventLoop().parent(), "geyser");
-            }
-        } catch (Throwable e) {
-            // The metrics endpoint itself is already up (configured in pre-init), so a
-            // failure to reflect into Geyser's server only costs the RakNet counters -
-            // log it instead of tearing everything down.
-            logError("Failed to wire RakNet network metrics into the Geyser server", e);
+        NetherNetServer server = impl.getNetherNetServer();
+        if (server == null) {
+            logWarn("NetherNet is not enabled in Geyser's config (bedrock.transport), so no network metrics will be collected");
+            return;
         }
+
+        // Built-in signaling: bound synchronously during Geyser's start, so it is up by now
+        // (or null if it is disabled or failed to start). Geyser has no getter for it.
+        try {
+            Field inbuiltChannel = NetherNetServer.class.getDeclaredField("inbuiltChannel");
+            inbuiltChannel.setAccessible(true);
+            wire((Channel) inbuiltChannel.get(server), "geyser-nethernet-builtin");
+        } catch (Throwable e) {
+            // The metrics endpoint itself is already up (configured in pre-init), so this
+            // only costs the NetherNet counters - log it instead of tearing everything down.
+            logError("Failed to wire NetherNet metrics into Geyser's built-in signaling", e);
+        }
+
+        // External signaling provider (NXS): opened asynchronously, so the channel may not exist
+        // yet. Wait for Geyser's provider start future to finish, then wire whatever it opened.
+        try {
+            Field providerStart = NetherNetServer.class.getDeclaredField("providerStart");
+            providerStart.setAccessible(true);
+            CompletableFuture<?> start = (CompletableFuture<?>) providerStart.get(server);
+            start.whenComplete((result, error) -> {
+                try {
+                    wire(server.providerChannel(), "geyser-nethernet-provider");
+                } catch (Throwable e) {
+                    logError("Failed to wire NetherNet metrics into Geyser's signaling provider", e);
+                }
+            });
+        } catch (Throwable e) {
+            logError("Failed to wire NetherNet metrics into Geyser's signaling provider", e);
+        }
+    }
+
+    private void wire(Channel channel, String healthGroup) {
+        if (channel == null) return;
+        wireServerMetrics(channel);
+        NettyHealthCheck.addGroup(channel.eventLoop().parent(), healthGroup);
     }
 
     @Subscribe

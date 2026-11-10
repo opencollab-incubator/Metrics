@@ -5,17 +5,15 @@ import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.event.defaults.ProxyStartEvent;
 import dev.waterdog.waterdogpe.network.NetworkInterface;
-import dev.waterdog.waterdogpe.network.RakNetInterface;
+import dev.waterdog.waterdogpe.network.nethernet.NetherNetInterface;
+import dev.waterdog.waterdogpe.network.nethernet.NetherNetProvider;
 import dev.waterdog.waterdogpe.plugin.Plugin;
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class WDPEPlugin extends Plugin {
     private final WDPEMagicMetrics metrics;
@@ -50,23 +48,38 @@ public class WDPEPlugin extends Plugin {
         ProxyServer server = event.getProxy();
         List<NetworkInterface> interfaces = server.getInterfaces();
         interfaces.forEach(networkInterface -> {
-            if (networkInterface instanceof RakNetInterface rakNet) {
+            if (networkInterface instanceof NetherNetInterface nethernet) {
                 try {
-                    Field serverChannelsField = rakNet.getClass().getField("serverChannels");
-                    serverChannelsField.setAccessible(true);
-                    List<Channel> serverChannels = (List<Channel>) serverChannelsField.get(rakNet);
-                    if (metrics.config.healthCheck().enabled()) {
-                        Set<EventLoopGroup> groups = new HashSet<>();
-                        for (Channel channel : serverChannels) {
-                            groups.add(channel.eventLoop().parent());
-                        }
-                        int i = 0;
-                        for (EventLoopGroup group : groups) {
-                            NettyHealthCheck.addGroup(group, "wdpe-%d".formatted(i++));
-                        }
+                    Field bindingsField = NetherNetInterface.class.getDeclaredField("bindings");
+                    bindingsField.setAccessible(true);
+                    List<Object> bindings = (List<Object>) bindingsField.get(nethernet);
+
+                    for (Object binding : bindings) {
+                        Field channelField = binding.getClass().getDeclaredField("channel");
+                        channelField.setAccessible(true);
+                        Channel channel = (Channel) channelField.get(server);
+                        if (channel == null) return;
+                        this.metrics.wireServerMetrics(channel);
+                        NettyHealthCheck.addGroup(channel.eventLoop().parent(), "wdpe-nethernet-builtin");
                     }
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                } catch (Throwable e) {
+                    this.metrics.logError("Failed to wire NetherNet metrics into WDPE's built-in signaling", e);
+                }
+
+                try {
+                    Field providerField = NetherNetInterface.class.getDeclaredField("provider");
+                    providerField.setAccessible(true);
+                    NetherNetProvider provider = (NetherNetProvider) providerField.get(nethernet);
+                    if (provider != null) {
+                        Field channelField = NetherNetProvider.class.getDeclaredField("channel");
+                        channelField.setAccessible(true);
+                        Channel channel = (Channel) channelField.get(provider);
+                        if (channel == null) return;
+                        this.metrics.wireServerMetrics(channel);
+                        NettyHealthCheck.addGroup(channel.eventLoop().parent(), "wdpe-nethernet-provider");
+                    }
+                } catch (Throwable e) {
+                    this.metrics.logError("Failed to wire NetherNet metrics into WDPE's signaling provider", e);
                 }
             }
         });

@@ -5,6 +5,8 @@ import dev.opencollab.magicmetrics.health.HealthMetrics;
 import dev.opencollab.magicmetrics.health.checks.DeadlockHealthCheck;
 import dev.opencollab.magicmetrics.health.checks.NettyHealthCheck;
 import dev.opencollab.magicmetrics.https.MetricServer;
+import dev.opencollab.magicmetrics.nethernet.LayeredNetherServerMetrics;
+import dev.opencollab.magicmetrics.server.NetherChildMetricsHandler;
 import dev.opencollab.magicmetrics.server.ServerMetrics;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -15,7 +17,10 @@ import io.smallrye.health.api.HealthType;
 import io.smallrye.health.registry.HealthRegistries;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.cloudburstmc.netty.channel.raknet.config.RakChannelOption;
+import org.cloudburstmc.netty.channel.nethernet.config.NetherChannelOption;
+import org.cloudburstmc.netty.channel.nethernet.config.NetherServerMetrics;
+
+import java.util.List;
 
 public abstract class MagicMetrics {
     private final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -45,17 +50,26 @@ public abstract class MagicMetrics {
     }
 
     /**
-     * Wires the RakNet server metrics into an already-bound server channel.
+     * Wires the NetherNet metrics into an already-bound NetherNet server channel.
      * <p>
-     * RakNet reads {@code RAK_SERVER_METRICS} from the channel config (a volatile
-     * field) on every incoming packet, so setting it here takes effect even though
-     * the channel is already bound. Setting the option on the
-     * {@link io.netty.bootstrap.ServerBootstrap} instead only ever applies at bind
-     * time, which is why doing so after the server has started had no effect.
+     * {@code NETHER_SERVER_METRICS} may be changed on a live server channel: the config hands
+     * the new value straight to the signaling, so listener wide events are reported from here
+     * on. Per connection metrics ({@code NETHER_METRICS}) are a child option, which the bound
+     * server can no longer take through its bootstrap, so a handler at the front of the server
+     * pipeline sets it on each connection as it is accepted.
      */
     public void wireServerMetrics(Channel channel) {
-        if (serverMetrics == null) return;
-        channel.config().setOption(RakChannelOption.RAK_SERVER_METRICS, serverMetrics);
+        if (serverMetrics == null || channel == null || !channel.isOpen()) return;
+        NetherServerMetrics metrics = channel.config().getOption(NetherChannelOption.NETHER_SERVER_METRICS);
+        if (metrics != null) {
+            metrics = new LayeredNetherServerMetrics(List.of(metrics, serverMetrics));
+        } else {
+            metrics = serverMetrics;
+        }
+        channel.config().setOption(NetherChannelOption.NETHER_SERVER_METRICS, metrics);
+        if (channel.pipeline().get(NetherChildMetricsHandler.NAME) == null) {
+            channel.pipeline().addFirst(NetherChildMetricsHandler.NAME, new NetherChildMetricsHandler(serverMetrics));
+        }
     }
 
     public void initHealth() {

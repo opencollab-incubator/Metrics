@@ -7,7 +7,7 @@ dependencies {
     annotationProcessor(libs.configurate.`interface`.ap)
     api(libs.configurate.yaml)
     api(libs.configurate.core)
-    compileOnlyApi(libs.raknet)
+    compileOnlyApi(libs.nethernet)
 
     api(platform(libs.micrometer.bom))
     api(libs.micrometer.core)

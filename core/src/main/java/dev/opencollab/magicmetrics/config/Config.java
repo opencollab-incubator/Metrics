@@ -47,31 +47,69 @@ public class Config {
         String endpoint = "/metrics";
 
         MetricConfig activeChannels = new MetricConfig(
-                true, "active_channels", "The number of active channels"
+                true, "active_channels", "The number of open NetherNet connections"
         );
 
-        MetricConfig blockedAddresses = new MetricConfig(
-                true, "blocked_addresses", "The address of the blocked channels due to exceeding packet limits"
+        // Listener wide (signaling) events
+        MetricConfig connectionsAccepted = new MetricConfig(
+                true, "connections_accepted", "The number of joins accepted at signaling, tagged by whether the identity was verified", Map.of("id", "CONNECTION_ACCEPTED")
         );
 
-        MetricConfig pings = new MetricConfig(
-                true, "total_pings", "Count of received unconnected pings"
+        MetricConfig joinsRefused = new MetricConfig(
+                true, "joins_refused", "The number of joins refused at signaling, tagged by the HTTP status the peer was refused with", Map.of("id", "JOIN_REFUSED")
         );
 
-        MetricConfig connectionRequests1 = new MetricConfig(
-                true, "connection_requests_one", "The number of stage 1 connection requests", Map.of("id", "CONN_REQ_1")
+        MetricConfig joinsThrottled = new MetricConfig(
+                true, "joins_throttled", "The number of joins turned away by the server throttle (a breakdown of joins_refused, not in addition to it)", Map.of("id", "JOIN_THROTTLED")
         );
 
-        MetricConfig connectionRequests2 = new MetricConfig(
-                true, "connection_requests_two", "The number of stage 2 connection requests", Map.of("id", "CONN_REQ_2")
+        MetricConfig addressesRefused = new MetricConfig(
+                true, "addresses_refused", "The number of signaling connections refused because the address already holds too many", Map.of("id", "ADDRESS_REFUSED")
         );
 
-        MetricConfig connectionRequests = new MetricConfig(
-                true, "connection_requests", "The number of connection requests", Map.of("id", "CONNECTION_REQUEST")
+        MetricConfig plaintextRefused = new MetricConfig(
+                true, "plaintext_refused", "The number of signaling requests refused for arriving without TLS where it is required", Map.of("id", "PLAINTEXT_REFUSED")
         );
 
-        MetricConfig newIncomingConnections = new MetricConfig(
-                true, "new_incoming_connections", "The number of new incoming connections", Map.of("id", "NEW_INCOMING_CONNECTION")
+        // Per connection events, summed over all connections
+        MetricConfig connectionFailures = new MetricConfig(
+                true, "connection_failures", "The number of connections that never carried traffic, tagged by reason", Map.of("id", "CONNECTION_FAILURE")
+        );
+
+        MetricConfig handshakeRetries = new MetricConfig(
+                true, "handshake_retries", "The number of WebRTC handshake retries", Map.of("id", "HANDSHAKE_RETRY")
+        );
+
+        MetricConfig pathsSelected = new MetricConfig(
+                true, "ice_paths_selected", "The number of ICE candidate pairs selected, tagged by local and remote candidate type (host, srflx, prflx, relay)", Map.of("id", "ICE_PATH_SELECTED")
+        );
+
+        MetricConfig bytesIn = new MetricConfig(
+                true, "bytes_in", "The number of bytes received over NetherNet", Map.of("id", "BYTES_IN")
+        );
+
+        MetricConfig bytesOut = new MetricConfig(
+                true, "bytes_out", "The number of bytes sent over NetherNet", Map.of("id", "BYTES_OUT")
+        );
+
+        MetricConfig messagesIn = new MetricConfig(
+                true, "messages_in", "The number of whole messages received over NetherNet", Map.of("id", "MESSAGES_IN")
+        );
+
+        MetricConfig messagesOut = new MetricConfig(
+                true, "messages_out", "The number of whole messages sent over NetherNet", Map.of("id", "MESSAGES_OUT")
+        );
+
+        MetricConfig fragmentsIn = new MetricConfig(
+                true, "fragments_in", "The number of non-final fragments of split messages received", Map.of("id", "FRAGMENTS_IN")
+        );
+
+        MetricConfig fragmentsOut = new MetricConfig(
+                true, "fragments_out", "The number of non-final fragments of split messages sent", Map.of("id", "FRAGMENTS_OUT")
+        );
+
+        MetricConfig decodeFailures = new MetricConfig(
+                true, "decode_failures", "The number of inbound messages that could not be delivered (missing fragments or empty frames)", Map.of("id", "DECODE_FAILURE")
         );
 
         MetricConfig connectedPlayers = new MetricConfig(
